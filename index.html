@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marioland Spaceship Destroyer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        
+        h1 {
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        #instructions {
+            color: #ffff00;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        
+        #gameContainer {
+            position: relative;
+            background: #87CEEB;
+            border: 5px solid #FFD700;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 70%, #228B22 70%, #228B22 100%);
+        }
+        
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border: 3px solid #FFD700;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        #score {
+            font-size: 24px;
+            color: #ffff00;
+        }
+        
+        #health {
+            font-size: 24px;
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 MARIOLAND SHIP DESTROYER 🎮</h1>
+    <div id="instructions">
+        Arrow Keys/WASD = Move | SPACE = Shoot | Destroy all ships with LESOTHO FLAGS! 🚩
+    </div>
+    <div style="margin-bottom: 15px;">
+        <a href="https://ianhwang161210-cmd.github.io/massage-123/" style="background: #FFD700; color: #000; padding: 12px 30px; font-size: 18px; font-weight: bold; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: inline-block; cursor: pointer; transition: all 0.2s;">
+            ▶ PLAY ONLINE ▶
+        </a>
+    </div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="hud">
+            Score: <span id="score">0</span><br>
+            Health: <span id="health">100</span><br>
+            Ammo: <span id="ammo">∞ FLAGS</span>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
