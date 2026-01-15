@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Space Adventure - Play Now!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #ADD8E6;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            gap: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-size: 2.5em;
+        }
+        
+        #gameContainer {
+            border: 5px solid #0066CC;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            background: #ADD8E6;
+        }
+        
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #ADD8E6 0%, #87CEEB 100%);
+        }
+        
+        #controls {
+            color: #333;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            background: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .key {
+            background: #0066CC;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            display: inline-block;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 SPACE ADVENTURE 🎮</h1>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    <div id="controls">
+        <span class="key">W/A/S/D</span> or <span class="key">ARROWS</span> to move | Dodge Mario & Luigi lasers from below! ⚡
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game constants
+        const SCREEN_WIDTH = canvas.width;
+        const SCREEN_HEIGHT = canvas.height;
+        const FPS = 60;
+        
+        // Colors
+        const BABY_BLUE = '#ADD8E6';
+        const DARK_BLUE = '#0066CC';
+        const RED = '#FF0000';
+        const GREEN = '#00AA00';
+        const SKIN_TONE = '#FFDBAC';
+        const BLACK = '#000000';
+        const WHITE = '#FFFFFF';
+        const YELLOW = '#FFFF00';
+        
+        // Player
+        let player = {
+            x: SCREEN_WIDTH / 2,
+            y: SCREEN_HEIGHT / 2,
+            w: 40,
+            h: 40,
+            speed: 5
+        };
+        
+        // Mario and Luigi
+        let mario = { x: SCREEN_WIDTH / 3, y: SCREEN_HEIGHT - 80, w: 30, h: 40 };
+        let luigi = { x: (SCREEN_WIDTH * 2) / 3, y: SCREEN_HEIGHT - 80, w: 30, h: 40 };
+        
+        // Game state
+        let lasers = [];
+        let laserTimer = 0;
+        let lives = 3;
+        let score = 0;
+        let gameRunning = true;
+        let gameOverTime = 0;
+        
+        // Keys
+        const keys = {};
+        
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+        
+        function drawMario(x, y, w, h) {
+            // Body
+            ctx.fillStyle = RED;
+            ctx.fillRect(x, y + 15, w, 15);
+            // Head
+            ctx.fillStyle = SKIN_TONE;
+            ctx.beginPath();
+            ctx.arc(x + w / 2, y + 8, 7, 0, Math.PI * 2);
+            ctx.fill();
+            // Eyes
+            ctx.fillStyle = WHITE;
+            ctx.beginPath();
+            ctx.arc(x + 5, y + 6, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + w - 5, y + 6, 2, 0, Math.PI * 2);
+            ctx.fill();
+            // Pupils
+            ctx.fillStyle = BLACK;
+            ctx.beginPath();
+            ctx.arc(x + 5, y + 6, 1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + w - 5, y + 6, 1, 0, Math.PI * 2);
+            ctx.fill();
+            // Hat
+            ctx.fillStyle = '#C80000';
+            ctx.fillRect(x - 2, y - 3, w + 4, 6);
+        }
+        
+        function drawLuigi(x, y, w, h) {
+            // Body
+            ctx.fillStyle = GREEN;
+            ctx.fillRect(x, y + 15, w, 15);
+            // Head
+            ctx.fillStyle = SKIN_TONE;
+            ctx.beginPath();
+            ctx.arc(x + w / 2, y + 8, 7, 0, Math.PI * 2);
+            ctx.fill();
+            // Eyes
+            ctx.fillStyle = WHITE;
+            ctx.beginPath();
+            ctx.arc(x + 5, y + 6, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + w - 5, y + 6, 2, 0, Math.PI * 2);
+            ctx.fill();
+            // Pupils
+            ctx.fillStyle = BLACK;
+            ctx.beginPath();
+            ctx.arc(x + 5, y + 6, 1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + w - 5, y + 6, 1, 0, Math.PI * 2);
+            ctx.fill();
+            // Hat
+            ctx.fillStyle = '#006400';
+            ctx.fillRect(x - 2, y - 3, w + 4, 6);
+        }
+        
+        function update() {
+            if (!gameRunning) return;
+            
+            // Player movement
+            if (keys['arrowleft'] || keys['a']) {
+                player.x = Math.max(0, player.x - player.speed);
+            }
+            if (keys['arrowright'] || keys['d']) {
+                player.x = Math.min(SCREEN_WIDTH - player.w, player.x + player.speed);
+            }
+            if (keys['arrowup'] || keys['w']) {
+                player.y = Math.max(0, player.y - player.speed);
+            }
+            if (keys['arrowdown'] || keys['s']) {
+                player.y = Math.min(SCREEN_HEIGHT - player.h, player.y + player.speed);
+            }
+            
+            // Shoot lasers
+            laserTimer++;
+            if (laserTimer > 30) {
+                lasers.push({
+                    x: mario.x + mario.w / 2,
+                    y: mario.y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: -5
+                });
+                lasers.push({
+                    x: luigi.x + luigi.w / 2,
+                    y: luigi.y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: -5
+                });
+                laserTimer = 0;
+            }
+            
+            // Update lasers
+            lasers = lasers.filter(l => l.y > 0);
+            for (let laser of lasers) {
+                laser.x += laser.vx;
+                laser.y += laser.vy;
+            }
+            
+            // Check collisions
+            let playerRect = { x: player.x, y: player.y, w: player.w, h: player.h };
+            for (let i = lasers.length - 1; i >= 0; i--) {
+                let laser = lasers[i];
+                if (laser.x > playerRect.x && laser.x < playerRect.x + playerRect.w &&
+                    laser.y > playerRect.y && laser.y < playerRect.y + playerRect.h) {
+                    lives--;
+                    lasers.splice(i, 1);
+                    if (lives <= 0) {
+                        gameRunning = false;
+                        gameOverTime = Date.now();
+                    } else {
+                        player.x = SCREEN_WIDTH / 2;
+                        player.y = SCREEN_HEIGHT / 2;
+                    }
+                    break;
+                }
+            }
+            
+            // Score
+            score++;
+        }
+        
+        function draw() {
+            // Background
+            ctx.fillStyle = BABY_BLUE;
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            
+            // Draw stars
+            ctx.fillStyle = WHITE;
+            for (let i = 0; i < 30; i++) {
+                let sx = (i * 73) % SCREEN_WIDTH;
+                let sy = (i * 127) % (SCREEN_HEIGHT - 100);
+                ctx.beginPath();
+                ctx.arc(sx, sy, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Ground area
+            ctx.fillStyle = DARK_BLUE;
+            ctx.fillRect(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100);
+            
+            // Draw player (spaceship)
+            ctx.fillStyle = YELLOW;
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.w / 2, player.y);
+            ctx.lineTo(player.x, player.y + player.h);
+            ctx.lineTo(player.x + player.w / 2, player.y + player.h - 10);
+            ctx.lineTo(player.x + player.w, player.y + player.h);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw lasers
+            ctx.fillStyle = YELLOW;
+            for (let laser of lasers) {
+                ctx.beginPath();
+                ctx.arc(laser.x, laser.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw Mario
+            drawMario(mario.x, mario.y, mario.w, mario.h);
+            
+            // Draw Luigi
+            drawLuigi(luigi.x, luigi.y, luigi.w, luigi.h);
+            
+            // HUD
+            ctx.fillStyle = RED;
+            ctx.font = 'bold 28px Arial';
+            ctx.fillText(`Lives: ${lives}`, 20, 40);
+            
+            ctx.fillStyle = BLACK;
+            ctx.fillText(`Score: ${Math.floor(score / 60)}`, SCREEN_WIDTH - 250, 40);
+            
+            // Game over
+            if (!gameRunning) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+                
+                ctx.fillStyle = WHITE;
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                
+                if (lives <= 0) {
+                    ctx.fillText('GAME OVER!', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 40);
+                    ctx.font = '32px Arial';
+                    ctx.fillText(`Final Score: ${Math.floor(score / 60)}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 40);
+                } else {
+                    ctx.fillText('YOU SURVIVED!', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 40);
+                    ctx.font = '32px Arial';
+                    ctx.fillText(`Final Score: ${Math.floor(score / 60)}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 40);
+                }
+            }
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
+    </script>
+</body>
+</html>
